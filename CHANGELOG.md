@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/Natteens/commander/compare/v0.1.0...v0.1.1) (2025-08-16)
+
+
+### Bug Fixes
+
+* Add Unity in-game console system ([d42b4a5](https://github.com/Natteens/commander/commit/d42b4a59db87e5b702c1f0064a3daf23a27b8616))
+
 # 📝 Changelog
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
