@@ -1,19 +1,22 @@
 {
-  "name": "com.natteens.commander",
+  "name": "commander",
   "version": "0.1.0",
   "displayName": "Commander",
-  "description": "",
+  "description": "Sistema de console nativo para Unity com interface GUI",
+  "unity": "2021.3",
   "keywords": [
     "Unity",
     "GameDev",
-    "Commander"
+    "Commander",
+    "Console",
+    "Debug",
+    "GUI"
   ],
   "author": {
     "name": "Nathan Silva Miranda",
     "email": "natteens.social@gmail.com",
     "url": "https://github.com/Natteens"
   },
-  "unity": "6000.0",
   "documentationUrl": "https://github.com/Natteens/commander",
   "changelogUrl": "https://github.com/Natteens/commander/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/Natteens/commander/blob/main/LICENSE.md"
