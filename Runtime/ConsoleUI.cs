@@ -158,7 +158,7 @@ namespace Commander
             AddLog("F1, F12 ou ` para abrir/fechar", CommandStatus.Info);
             AddLog("Tab para mostrar sugestões", CommandStatus.Info);
             
-            Debug.Log("Commander: Console inicializado");
+            //Debug.Log("Commander: Console inicializado");
         }
 
         private void OnDisable()
