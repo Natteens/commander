@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Commander
 {
     /// <summary>
-    /// Console funcional com autocomplete melhorado
+    /// Console funcional com autocomplete melhorado - SINGLETON GARANTIDO
     /// </summary>
     public sealed class ConsoleUI : MonoBehaviour, ICommandObserver
     {
@@ -15,6 +15,7 @@ namespace Commander
         private const int MaxSuggestions = 8;
 
         private static ConsoleUI _instance;
+        private static bool _creationLock = false;
         public static ConsoleUI Instance => _instance;
 
         private readonly List<string> commandHistory = new();
@@ -24,6 +25,7 @@ namespace Commander
         private int historyIndex = -1;
         private bool isVisible = false;
         private bool shouldFocusInput = false;
+        private bool isDestroyed = false;
         
         // Window
         private Rect windowRect = new Rect(20, 0, 600, 400);
@@ -33,7 +35,7 @@ namespace Commander
         private bool userIsScrolling = false;
         private float lastScrollTime = 0f;
         
-        // Autocomplete - Melhorado
+        // Autocomplete
         private string[] currentSuggestions = new string[0];
         private int selectedSuggestion = -1;
         private bool showSuggestions = false;
@@ -53,6 +55,10 @@ namespace Commander
         private int frameCount = 0;
         private float lastFpsUpdate = 0f;
 
+        // Controle de toggle
+        private float lastToggleTime = 0f;
+        private const float ToggleCooldown = 0.1f;
+
         // Estilos GUI (cached)
         private GUIStyle suggestionBoxStyle;
         private GUIStyle suggestionItemStyle;
@@ -62,30 +68,54 @@ namespace Commander
 
         public static ConsoleUI Create()
         {
-            if (_instance != null) 
+            // Proteção contra criação múltipla
+            if (_creationLock)
             {
-                DestroyImmediate(_instance.gameObject);
+                Debug.LogWarning("Commander: Tentativa de criar ConsoleUI enquanto outra criação está em andamento");
+                return _instance;
             }
 
-            var go = new GameObject("[Commander Console]");
-            go.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
-            var console = go.AddComponent<ConsoleUI>();
-            DontDestroyOnLoad(go);
-            return console;
+            _creationLock = true;
+
+            try
+            {
+                // Se já existe, retorna a instância existente
+                if (_instance != null)
+                {
+                    Debug.LogWarning("Commander: ConsoleUI já existe, retornando instância existente");
+                    return _instance;
+                }
+
+                // Verifica se não está em build de produção
+                if (!Debug.isDebugBuild && !Application.isEditor)
+                {
+                    Debug.Log("Commander: ConsoleUI não criado em build de produção");
+                    return null;
+                }
+
+                var go = new GameObject("[Commander Console]");
+                go.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
+                var console = go.AddComponent<ConsoleUI>();
+                DontDestroyOnLoad(go);
+                
+                return console;
+            }
+            finally
+            {
+                _creationLock = false;
+            }
         }
 
         private void InitializeStyles()
         {
             if (stylesInitialized) return;
 
-            // Estilo da caixa de sugestões
             suggestionBoxStyle = new GUIStyle(GUI.skin.box)
             {
                 padding = new RectOffset(4, 4, 4, 4),
                 normal = { background = MakeTex(1, 1, new Color(0.1f, 0.1f, 0.1f, 0.95f)) }
             };
 
-            // Estilo do item de sugestão
             suggestionItemStyle = new GUIStyle(GUI.skin.button)
             {
                 alignment = TextAnchor.MiddleLeft,
@@ -102,7 +132,6 @@ namespace Commander
                 }
             };
 
-            // Estilo do item selecionado
             suggestionSelectedStyle = new GUIStyle(suggestionItemStyle)
             {
                 normal = {
@@ -115,7 +144,6 @@ namespace Commander
                 }
             };
 
-            // Estilo do cabeçalho das sugestões
             suggestionHeaderStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 10,
@@ -142,8 +170,18 @@ namespace Commander
 
         private void Awake()
         {
+            // Proteção RIGOROSA contra duplicatas
             if (_instance != null && _instance != this)
             {
+                Debug.LogWarning("Commander: ConsoleUI duplicado detectado e destruído imediatamente");
+                DestroyImmediate(gameObject);
+                return;
+            }
+
+            // Verifica se está em build de produção
+            if (!Debug.isDebugBuild && !Application.isEditor)
+            {
+                Debug.Log("Commander: ConsoleUI desabilitado em build de produção");
                 DestroyImmediate(gameObject);
                 return;
             }
@@ -158,7 +196,50 @@ namespace Commander
             AddLog("F1, F12 ou ` para abrir/fechar", CommandStatus.Info);
             AddLog("Tab para mostrar sugestões", CommandStatus.Info);
             
-            //Debug.Log("Commander: Console inicializado");
+#if UNITY_EDITOR
+            // Detecta quando sai do Play Mode
+            UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#endif
+        }
+
+#if UNITY_EDITOR
+        private void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
+        {
+            if (state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+            {
+                // Força limpeza ao sair do Play Mode
+                ForceCleanup();
+            }
+        }
+
+        private void ForceCleanup()
+        {
+            try
+            {
+                isDestroyed = true;
+                isVisible = false;
+                
+                CommandSystem.RemoveObserver(this);
+                
+                if (_instance == this)
+                {
+                    _instance = null;
+                    _creationLock = false;
+                }
+
+                if (gameObject != null)
+                    DestroyImmediate(gameObject);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Commander: Erro na limpeza forçada: {ex.Message}");
+            }
+        }
+#endif
+
+        private void OnEnable()
+        {
+            isDestroyed = false;
         }
 
         private void OnDisable()
@@ -168,6 +249,8 @@ namespace Commander
 
         public void OnCommandExecuted(CommandResult result)
         {
+            if (isDestroyed) return;
+            
             if (!string.IsNullOrEmpty(result.Message) || result.Status == CommandStatus.Error)
             {
                 var message = string.IsNullOrEmpty(result.Message) ? 
@@ -179,7 +262,7 @@ namespace Commander
 
         private void Update()
         {
-            if (!Application.isPlaying)
+            if (isDestroyed || !Application.isPlaying)
             {
                 isVisible = false;
                 return;
@@ -203,23 +286,27 @@ namespace Commander
 
         private void HandleInputKeys()
         {
-            // Toggle console
-            if (Input.GetKeyDown(KeyCode.F1) || 
-                Input.GetKeyDown(KeyCode.F12) || 
-                Input.GetKeyDown(KeyCode.BackQuote) ||
-                Input.GetKeyDown(KeyCode.F2))
+            // Toggle console com COOLDOWN para evitar múltiplas aberturas
+            if (Time.unscaledTime - lastToggleTime >= ToggleCooldown)
             {
-                Toggle();
+                if (Input.GetKeyDown(KeyCode.F1) || 
+                    Input.GetKeyDown(KeyCode.F12) || 
+                    Input.GetKeyDown(KeyCode.BackQuote) ||
+                    Input.GetKeyDown(KeyCode.F2))
+                {
+                    Toggle();
+                    lastToggleTime = Time.unscaledTime;
+                }
             }
 
             if (!isVisible) return;
 
             // Histórico
-            if (Input.GetKeyDown(KeyCode.UpArrow))
+            if (Input.GetKeyDown(KeyCode.UpArrow) && !showSuggestions)
             {
                 NavigateHistory(-1);
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            else if (Input.GetKeyDown(KeyCode.DownArrow) && !showSuggestions)
             {
                 NavigateHistory(1);
             }
@@ -248,7 +335,7 @@ namespace Commander
 
         private void OnGUI()
         {
-            if (!isVisible || !Application.isPlaying) return;
+            if (isDestroyed || !isVisible || !Application.isPlaying) return;
 
             InitializeStyles();
 
@@ -274,17 +361,10 @@ namespace Commander
             GUILayout.EndVertical();
             GUILayout.EndArea();
 
-            // Desenha sugestões FORA da área principal para evitar clipping
+            // Desenha sugestões FORA da área principal
             if (showSuggestions && currentSuggestions.Length > 0)
             {
                 DrawSuggestionsOverlay();
-            }
-
-            // Permite arrastar
-            if (Event.current.type == EventType.MouseDrag && windowRect.Contains(Event.current.mousePosition))
-            {
-                windowRect.x += Event.current.delta.x;
-                windowRect.y += Event.current.delta.y;
             }
         }
 
@@ -364,7 +444,6 @@ namespace Commander
 
             GUI.SetNextControlName("CommandInput");
             
-            // Eventos do input
             Event e = Event.current;
             if (e.type == EventType.KeyDown && GUI.GetNameOfFocusedControl() == "CommandInput")
             {
@@ -421,15 +500,13 @@ namespace Commander
 
             GUILayout.EndHorizontal();
 
-            // Calcula a posição das sugestões baseado no input
             if (Event.current.type == EventType.Repaint)
             {
-                var inputRect = GUILayoutUtility.GetLastRect();
                 suggestionRect = new Rect(
-                    windowRect.x + 20, // Margem da janela
-                    windowRect.y + windowRect.height - 60, // Acima do input
-                    windowRect.width - 40, // Largura da janela menos margens
-                    0 // Altura será calculada dinamicamente
+                    windowRect.x + 20,
+                    windowRect.y + windowRect.height - 60,
+                    windowRect.width - 40,
+                    0
                 );
             }
         }
@@ -444,24 +521,20 @@ namespace Commander
             var finalHeight = Mathf.Min(contentHeight, maxHeight);
 
             suggestionRect.height = finalHeight;
-            suggestionRect.y = windowRect.y + windowRect.height - 60 - finalHeight; // Posiciona acima do input
+            suggestionRect.y = windowRect.y + windowRect.height - 60 - finalHeight;
 
-            // Garante que não saia da tela
             if (suggestionRect.y < 10)
             {
-                suggestionRect.y = windowRect.y + windowRect.height + 10; // Coloca abaixo se não couber acima
+                suggestionRect.y = windowRect.y + windowRect.height + 10;
             }
 
-            // Fundo da caixa de sugestões
             GUI.Box(suggestionRect, "", suggestionBoxStyle);
 
             GUILayout.BeginArea(suggestionRect);
             GUILayout.BeginVertical();
 
-            // Cabeçalho
             GUILayout.Label($"Sugestões ({currentSuggestions.Length} encontradas)", suggestionHeaderStyle);
 
-            // Lista de sugestões com scroll se necessário
             if (contentHeight > maxHeight)
             {
                 suggestionScrollPosition = GUILayout.BeginScrollView(
@@ -487,7 +560,6 @@ namespace Commander
                     ApplySuggestion(suggestion);
                 }
 
-                // Destaca a seleção atual
                 if (isSelected && Event.current.type == EventType.Repaint)
                 {
                     var buttonRect = GUILayoutUtility.GetLastRect();
@@ -502,7 +574,6 @@ namespace Commander
                 GUILayout.EndScrollView();
             }
 
-            // Rodapé com dicas
             GUILayout.FlexibleSpace();
             GUI.color = new Color(0.7f, 0.7f, 0.7f, 1f);
             GUILayout.Label("↑↓: navegar | Enter/Click: aplicar | Tab: próxima | ESC: fechar", 
@@ -519,7 +590,6 @@ namespace Commander
 
         private void OnInputChanged()
         {
-            // Auto-atualiza sugestões enquanto digita (opcional)
             if (showSuggestions)
             {
                 UpdateSuggestions();
@@ -531,7 +601,6 @@ namespace Commander
         {
             if (!showSuggestions)
             {
-                // Primeira vez pressionando Tab - mostra sugestões
                 UpdateSuggestions();
                 if (currentSuggestions.Length > 0)
                 {
@@ -541,7 +610,6 @@ namespace Commander
             }
             else
             {
-                // Tab subsequentes - navega pelas sugestões
                 selectedSuggestion = (selectedSuggestion + 1) % currentSuggestions.Length;
             }
         }
@@ -554,7 +622,6 @@ namespace Commander
                 return;
             }
 
-            // Evita recalcular se o input não mudou
             if (inputBuffer == lastInputForSuggestions && showSuggestions)
                 return;
 
@@ -570,7 +637,7 @@ namespace Commander
 
         private void ApplySuggestion(string suggestion)
         {
-            inputBuffer = suggestion + " "; // Adiciona espaço para facilitar digitação de parâmetros
+            inputBuffer = suggestion + " ";
             HideSuggestions();
             shouldFocusInput = true;
         }
@@ -646,7 +713,7 @@ namespace Commander
 
         public void Toggle()
         {
-            if (!Application.isPlaying) return;
+            if (isDestroyed || !Application.isPlaying) return;
             
             isVisible = !isVisible;
             
@@ -662,7 +729,7 @@ namespace Commander
 
         public void Show()
         {
-            if (!Application.isPlaying) return;
+            if (isDestroyed || !Application.isPlaying) return;
             isVisible = true;
             shouldFocusInput = true;
         }
@@ -682,6 +749,8 @@ namespace Commander
 
         public void AddLog(string message, CommandStatus status)
         {
+            if (isDestroyed) return;
+            
             logs.Add(new LogEntry(message, status, DateTime.Now));
             
             if (logs.Count > MaxLogEntries)
@@ -692,6 +761,7 @@ namespace Commander
         {
             try
             {
+                isDestroyed = true;
                 CommandSystem.RemoveObserver(this);
             }
             catch (Exception ex)
@@ -700,11 +770,17 @@ namespace Commander
             }
             
             if (_instance == this)
+            {
                 _instance = null;
+                _creationLock = false;
+            }
         }
 
         private void OnDestroy()
         {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+#endif
             Cleanup();
         }
 
