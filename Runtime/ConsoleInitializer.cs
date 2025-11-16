@@ -169,7 +169,7 @@ namespace Commander
                 CommandSystem.Initialize();
                 consoleUI = ConsoleUI.Create();
                 systemInitialized = true;
-                Debug.Log("Commander: Sistema inicializado com sucesso");
+              //  Debug.Log("Commander: Sistema inicializado com sucesso");
             }
             catch (Exception ex)
             {
