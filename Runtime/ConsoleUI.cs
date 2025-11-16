@@ -197,6 +197,8 @@ namespace Commander
             AddLog("Tab para mostrar sugestões", CommandStatus.Info);
             
 #if UNITY_EDITOR
+            // Remove qualquer listener anterior antes de registrar (precaução)
+            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             // Detecta quando sai do Play Mode
             UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
@@ -216,23 +218,42 @@ namespace Commander
         {
             try
             {
+                // Verifica se o objeto ainda não foi destruído
+                if (this == null || isDestroyed)
+                    return;
+                
                 isDestroyed = true;
                 isVisible = false;
                 
-                CommandSystem.RemoveObserver(this);
+                // Remove observer de forma segura
+                try
+                {
+                    CommandSystem.RemoveObserver(this);
+                }
+                catch (Exception)
+                {
+                    // Ignora erros ao remover observer se CommandSystem já foi limpo
+                }
                 
+                // Limpa a instância estática
                 if (_instance == this)
                 {
                     _instance = null;
                     _creationLock = false;
                 }
 
-                if (gameObject != null)
+                // Remove o listener antes de destruir
+                UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+
+                // Só tenta destruir se o gameObject ainda existir
+                if (gameObject != null && !ReferenceEquals(gameObject, null))
+                {
                     DestroyImmediate(gameObject);
+                }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Commander: Erro na limpeza forçada: {ex.Message}");
+                Debug.LogWarning($"Commander: Aviso durante limpeza forçada: {ex.Message}");
             }
         }
 #endif
@@ -761,14 +782,28 @@ namespace Commander
         {
             try
             {
+                // Evita cleanup duplo
+                if (isDestroyed) return;
+                
                 isDestroyed = true;
-                CommandSystem.RemoveObserver(this);
+                isVisible = false;
+                
+                // Remove observer de forma segura
+                try
+                {
+                    CommandSystem.RemoveObserver(this);
+                }
+                catch (Exception)
+                {
+                    // Ignora erros se CommandSystem já foi limpo
+                }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"Commander: Erro cleanup: {ex.Message}");
             }
             
+            // Limpa instância estática se for a instância atual
             if (_instance == this)
             {
                 _instance = null;
@@ -779,8 +814,19 @@ namespace Commander
         private void OnDestroy()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            // Remove o listener de forma segura para evitar callbacks orfãos
+            try
+            {
+                UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Commander: Erro ao remover listener: {ex.Message}");
+            }
 #endif
+            
+            // Marca como destruído antes de fazer cleanup
+            isDestroyed = true;
             Cleanup();
         }
 
