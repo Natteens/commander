@@ -1,6 +1,6 @@
 {
   "name": "commander",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Commander",
   "description": "Sistema de console nativo para Unity com interface GUI",
   "unity": "2021.3",
