@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/Natteens/commander/compare/v0.1.1...v0.2.0) (2025-12-11)
+
+
+### Features
+
+* Update input handling in Commander ([c011d61](https://github.com/Natteens/commander/commit/c011d6157d47a5971eb69e1452526362941c4465))
+
 ## [0.1.1](https://github.com/Natteens/commander/compare/v0.1.0...v0.1.1) (2025-08-16)
 
 
