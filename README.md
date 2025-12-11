@@ -5,7 +5,7 @@
 ![Unity](https://img.shields.io/badge/Unity-6000.0+-000000.svg?style=for-the-badge&logo=unity&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-0.1.1-green.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-0.2.0-green.svg?style=for-the-badge)
 
 **Sistema de Console de Comandos Avançado para Unity**
 
