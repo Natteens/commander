@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace Commander
 {
-    /// <summary>
-    /// Comandos padrão aprimorados para Dear ImGui
-    /// </summary>
     internal static class DefaultCommands
     {
         [Command("help", "Mostra todos os comandos disponíveis com suas descrições")]
@@ -14,7 +11,6 @@ namespace Commander
             var commands = CommandSystem.GetCommands();
             CommandSystem.Log($"=== Commander Console - {commands.Length} comandos disponíveis ===", CommandStatus.Info);
             
-            // Agrupa comandos por categoria (baseado no primeiro nome)
             var grouped = commands.GroupBy(cmd => cmd.Split('_')[0]).OrderBy(g => g.Key);
             
             foreach (var group in grouped)
@@ -140,7 +136,7 @@ namespace Commander
             if (matches.Count > 0)
             {
                 CommandSystem.Log($"Objetos encontrados ({matches.Count}):", CommandStatus.Info);
-                foreach (var match in matches.Take(10)) // Limita a 10 para não poluir
+                foreach (var match in matches.Take(10))
                 {
                     CommandSystem.Log($"  - {match}", CommandStatus.Success);
                 }
@@ -176,7 +172,7 @@ namespace Commander
             CommandSystem.Log($"=== Objetos da Cena ({objects.Length}) ===", CommandStatus.Info);
             
             var rootObjects = objects.Where(obj => obj.transform.parent == null).ToList();
-            foreach (var obj in rootObjects.Take(20)) // Limita para não poluir
+            foreach (var obj in rootObjects.Take(20)) 
             {
                 CommandSystem.Log($"- {obj.name} ({obj.transform.childCount} filhos)", CommandStatus.Info);
             }
@@ -208,7 +204,6 @@ namespace Commander
         [Command("memory_info", "Mostra informações de memória")]
         public static void ShowMemoryInfo()
         {
-            // Usando as APIs atualizadas que não são obsoletas
             var totalMemory = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
             var reservedMemory = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong();
             var unusedMemory = UnityEngine.Profiling.Profiler.GetTotalUnusedReservedMemoryLong();

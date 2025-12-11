@@ -7,9 +7,6 @@ using UnityEngine;
 
 namespace Commander
 {
-    /// <summary>
-    /// Manipula conversão de parâmetros para execução de comandos
-    /// </summary>
     public sealed class ParameterConverter
     {
         private static readonly Dictionary<Type, Func<string, object>> Converters = new()

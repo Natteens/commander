@@ -13,10 +13,8 @@ namespace Commander
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInitialize()
         {
-            // LIMPA estados anteriores ao iniciar
             CleanupStaleInstances();
             
-            // APENAS inicializa em Development Builds ou no Editor
             if (!Debug.isDebugBuild && !Application.isEditor)
             {
                 Debug.Log("Commander: Desabilitado em builds de produção");
@@ -30,7 +28,6 @@ namespace Commander
 
             _initializationAttempted = true;
 
-            // Se já existe uma instância, não cria outra
             if (_instance != null)
             {
                 return;
@@ -41,12 +38,10 @@ namespace Commander
 
         private static void CleanupStaleInstances()
         {
-            // Limpa qualquer instância antiga que possa ter sobrado
             _instance = null;
             _initializationAttempted = false;
             
-            // Remove GameObjects órfãos do Commander
-            var staleObjects = GameObject.FindObjectsOfType<ConsoleInitializer>();
+            var staleObjects = FindObjectsByType<ConsoleInitializer>(FindObjectsSortMode.None);
             foreach (var obj in staleObjects)
             {
                 if (obj != null && obj.gameObject != null)
@@ -55,7 +50,7 @@ namespace Commander
                 }
             }
             
-            var staleConsoles = GameObject.FindObjectsOfType<ConsoleUI>();
+            var staleConsoles = FindObjectsByType<ConsoleUI>(FindObjectsSortMode.None);
             foreach (var console in staleConsoles)
             {
                 if (console != null && console.gameObject != null)
@@ -67,7 +62,6 @@ namespace Commander
 
         private static void CreateInstance()
         {
-            // Verifica novamente se já existe
             if (_instance != null)
             {
                 Debug.LogWarning("Commander: Tentativa de criar instância duplicada bloqueada");
@@ -84,7 +78,6 @@ namespace Commander
 
         private void Awake()
         {
-            // Proteção contra duplicatas
             if (_instance != null && _instance != this)
             {
                 Debug.LogWarning("Commander: Instância duplicada detectada e destruída");
@@ -92,7 +85,6 @@ namespace Commander
                 return;
             }
 
-            // Verifica se está em build de produção
             if (!Debug.isDebugBuild && !Application.isEditor)
             {
                 Debug.Log("Commander: Desabilitado em builds de produção");
@@ -104,7 +96,6 @@ namespace Commander
             DontDestroyOnLoad(gameObject);
             
 #if UNITY_EDITOR
-            // Limpa quando sair do Play Mode no Editor
             UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
         }
@@ -114,7 +105,6 @@ namespace Commander
         {
             if (state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
             {
-                // Força limpeza completa ao sair do Play Mode
                 ForceCleanup();
             }
         }
@@ -156,7 +146,6 @@ namespace Commander
         {
             if (systemInitialized) return;
 
-            // Última verificação de segurança
             if (!Debug.isDebugBuild && !Application.isEditor)
             {
                 Debug.Log("Commander: Sistema não inicializado (produção)");
@@ -169,7 +158,6 @@ namespace Commander
                 CommandSystem.Initialize();
                 consoleUI = ConsoleUI.Create();
                 systemInitialized = true;
-              //  Debug.Log("Commander: Sistema inicializado com sucesso");
             }
             catch (Exception ex)
             {

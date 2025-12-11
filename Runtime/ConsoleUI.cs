@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem; 
 
 namespace Commander
 {
-    /// <summary>
-    /// Console funcional com autocomplete melhorado - SINGLETON GARANTIDO
-    /// </summary>
     public sealed class ConsoleUI : MonoBehaviour, ICommandObserver
     {
         private const int MaxLogEntries = 1000;
@@ -15,7 +13,7 @@ namespace Commander
         private const int MaxSuggestions = 8;
 
         private static ConsoleUI _instance;
-        private static bool _creationLock = false;
+        private static bool _creationLock;
         public static ConsoleUI Instance => _instance;
 
         private readonly List<string> commandHistory = new();
@@ -23,22 +21,19 @@ namespace Commander
         
         private string inputBuffer = "";
         private int historyIndex = -1;
-        private bool isVisible = false;
-        private bool shouldFocusInput = false;
-        private bool isDestroyed = false;
+        private bool isVisible;
+        private bool shouldFocusInput;
+        private bool isDestroyed;
         
-        // Window
-        private Rect windowRect = new Rect(20, 0, 600, 400);
+        private Rect windowRect = new(20, 0, 600, 400);
         
-        // Scroll
         private Vector2 scrollPosition = Vector2.zero;
-        private bool userIsScrolling = false;
-        private float lastScrollTime = 0f;
+        private bool userIsScrolling;
+        private float lastScrollTime;
         
-        // Autocomplete
-        private string[] currentSuggestions = new string[0];
+        private string[] currentSuggestions = Array.Empty<string>();
         private int selectedSuggestion = -1;
-        private bool showSuggestions = false;
+        private bool showSuggestions;
         private string lastInputForSuggestions = "";
         private Rect suggestionRect;
         private Vector2 suggestionScrollPosition = Vector2.zero;
@@ -51,15 +46,13 @@ namespace Commander
             { CommandStatus.Info, Color.cyan }
         };
 
-        private float fps = 0f;
-        private int frameCount = 0;
-        private float lastFpsUpdate = 0f;
+        private float fps;
+        private int frameCount;
+        private float lastFpsUpdate;
 
-        // Controle de toggle
-        private float lastToggleTime = 0f;
+        private float lastToggleTime;
         private const float ToggleCooldown = 0.1f;
 
-        // Estilos GUI (cached)
         private GUIStyle suggestionBoxStyle;
         private GUIStyle suggestionItemStyle;
         private GUIStyle suggestionSelectedStyle;
@@ -68,7 +61,6 @@ namespace Commander
 
         public static ConsoleUI Create()
         {
-            // Proteção contra criação múltipla
             if (_creationLock)
             {
                 Debug.LogWarning("Commander: Tentativa de criar ConsoleUI enquanto outra criação está em andamento");
@@ -79,14 +71,12 @@ namespace Commander
 
             try
             {
-                // Se já existe, retorna a instância existente
                 if (_instance != null)
                 {
                     Debug.LogWarning("Commander: ConsoleUI já existe, retornando instância existente");
                     return _instance;
                 }
 
-                // Verifica se não está em build de produção
                 if (!Debug.isDebugBuild && !Application.isEditor)
                 {
                     Debug.Log("Commander: ConsoleUI não criado em build de produção");
@@ -307,13 +297,15 @@ namespace Commander
 
         private void HandleInputKeys()
         {
-            // Toggle console com COOLDOWN para evitar múltiplas aberturas
+            if (Keyboard.current == null)
+                return;
+            
             if (Time.unscaledTime - lastToggleTime >= ToggleCooldown)
             {
-                if (Input.GetKeyDown(KeyCode.F1) || 
-                    Input.GetKeyDown(KeyCode.F12) || 
-                    Input.GetKeyDown(KeyCode.BackQuote) ||
-                    Input.GetKeyDown(KeyCode.F2))
+                if (Keyboard.current.f1Key.wasPressedThisFrame ||
+                    Keyboard.current.f12Key.wasPressedThisFrame ||
+                    Keyboard.current.backquoteKey.wasPressedThisFrame ||
+                    Keyboard.current.f2Key.wasPressedThisFrame)
                 {
                     Toggle();
                     lastToggleTime = Time.unscaledTime;
@@ -323,26 +315,22 @@ namespace Commander
             if (!isVisible) return;
 
             // Histórico
-            if (Input.GetKeyDown(KeyCode.UpArrow) && !showSuggestions)
+            if (Keyboard.current.upArrowKey.wasPressedThisFrame && !showSuggestions)
             {
                 NavigateHistory(-1);
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow) && !showSuggestions)
+            else if (Keyboard.current.downArrowKey.wasPressedThisFrame && !showSuggestions)
             {
                 NavigateHistory(1);
             }
 
             // ESC
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (showSuggestions)
-                {
                     HideSuggestions();
-                }
                 else
-                {
                     Hide();
-                }
             }
         }
 

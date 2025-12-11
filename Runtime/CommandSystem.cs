@@ -7,19 +7,13 @@ using UnityEngine;
 
 namespace Commander
 {
-    /// <summary>
-    /// Sistema principal de comandos
-    /// </summary>
     public static class CommandSystem
     {
         private static readonly Dictionary<string, CommandMethod> Commands = new();
         private static readonly List<ICommandObserver> Observers = new();
         private static readonly ParameterConverter Converter = new();
         private static bool _isInitialized;
-
-        /// <summary>
-        /// Inicializa o sistema de comandos
-        /// </summary>
+        
         public static void Initialize()
         {
             if (_isInitialized) return;
@@ -30,9 +24,6 @@ namespace Commander
             Log("Sistema Commander inicializado", CommandStatus.Success);
         }
 
-        /// <summary>
-        /// Executa um comando a partir de uma string de entrada
-        /// </summary>
         public static CommandResult Execute(string input)
         {
             if (!_isInitialized) Initialize();
@@ -67,18 +58,12 @@ namespace Commander
             }
         }
 
-        /// <summary>
-        /// Obtém todos os comandos disponíveis
-        /// </summary>
         public static string[] GetCommands()
         {
             if (!_isInitialized) Initialize();
             return Commands.Keys.OrderBy(x => x).ToArray();
         }
-
-        /// <summary>
-        /// Obtém sugestões de comandos para autocompletar
-        /// </summary>
+        
         public static string[] GetSuggestions(string partial)
         {
             if (!_isInitialized) Initialize();
@@ -89,27 +74,20 @@ namespace Commander
                 .OrderBy(cmd => cmd)
                 .ToArray();
         }
-
-        /// <summary>
-        /// Adiciona um observador ao sistema
-        /// </summary>
+        
         public static void AddObserver(ICommandObserver observer)
         {
             if (observer != null && !Observers.Contains(observer))
                 Observers.Add(observer);
         }
 
-        /// <summary>
-        /// Remove um observador do sistema
-        /// </summary>
+        
         public static void RemoveObserver(ICommandObserver observer)
         {
             Observers.Remove(observer);
         }
 
-        /// <summary>
-        /// Método auxiliar para logar mensagens no console
-        /// </summary>
+        
         public static void Log(string message, CommandStatus status = CommandStatus.Info)
         {
             ConsoleUI.Instance?.AddLog(message, status);
@@ -129,8 +107,8 @@ namespace Commander
                    !name.Contains("System.") &&
                    !name.Contains("Microsoft.") &&
                    !name.Contains("Mono.") &&
-                   !name.Contains("ImGui") &&    // Evita assemblies ImGui que podem ter conflitos
-                   !name.Contains("ImPlot") &&   // Evita assemblies ImPlot problemáticos
+                   !name.Contains("ImGui") &&   
+                   !name.Contains("ImPlot") &&   
                    !name.Contains("netstandard") &&
                    !name.Contains("mscorlib");
         }
@@ -145,7 +123,6 @@ namespace Commander
             }
             catch (ReflectionTypeLoadException ex)
             {
-                // Tenta processar os tipos que carregaram com sucesso
                 foreach (var type in ex.Types.Where(t => t != null))
                 {
                     try
@@ -154,7 +131,6 @@ namespace Commander
                     }
                     catch (Exception typeEx)
                     {
-                        // Log apenas se for um tipo relevante (evita spam de ImGui/ImPlot)
                         if (!IsImGuiRelatedType(type))
                         {
                             UnityEngine.Debug.LogWarning($"Commander: Erro ao escanear tipo individual {type?.Name}: {typeEx.Message}");
@@ -172,7 +148,6 @@ namespace Commander
         {
             try
             {
-                // Evita tipos problemáticos do ImGui/ImPlot
                 if (IsImGuiRelatedType(type))
                     return;
 
@@ -192,7 +167,6 @@ namespace Commander
                     }
                     catch (Exception methodEx)
                     {
-                        // Log apenas erros não relacionados ao ImGui
                         if (!type.FullName.Contains("ImGui") && !type.FullName.Contains("ImPlot"))
                         {
                             UnityEngine.Debug.LogWarning($"Commander: Erro ao processar método {method.Name} em {type.Name}: {methodEx.Message}");
@@ -202,7 +176,6 @@ namespace Commander
             }
             catch (Exception ex)
             {
-                // Log apenas se não for um tipo do ImGui/ImPlot
                 if (!IsImGuiRelatedType(type))
                 {
                     UnityEngine.Debug.LogWarning($"Commander: Erro ao escanear tipo {type?.Name}: {ex.Message}");
@@ -290,8 +263,6 @@ namespace Commander
             {
                 var instance = UnityEngine.Object.FindFirstObjectByType(type);
                 if (instance != null) return instance;
-                
-                // Se não encontrou, tenta criar um GameObject temporário
                 var go = new GameObject($"Commander_{type.Name}");
                 UnityEngine.Object.DontDestroyOnLoad(go);
                 return go.AddComponent(type);
