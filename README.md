@@ -35,9 +35,6 @@
 ### 🔧 **Funcionalidades Avançadas**
 - 🔐 **Autenticação de desenvolvedor** em builds
 - 📊 **Logs estruturados** com níveis
-- 🎬 **Animações e transições** suaves
-- 🖱️ **Scroll com mouse** e navegação por teclado
-- 🎨 **Interface customizável** e responsiva
 
 ---
 
