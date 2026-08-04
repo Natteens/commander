@@ -1,3 +1,11 @@
+## [0.2.1](https://github.com/Natteens/commander/compare/v0.2.0...v0.2.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* declare Input System dependency ([2d18dfc](https://github.com/Natteens/commander/commit/2d18dfce46d634ccc977e24344d2378de5061367))
+* preserve UPM dependencies during release [skip ci] ([3ab41b2](https://github.com/Natteens/commander/commit/3ab41b27b476ab4e75e55172ef570802f79cf077))
+
 # [0.2.0](https://github.com/Natteens/commander/compare/v0.1.1...v0.2.0) (2025-12-11)
 
 
