@@ -17,6 +17,9 @@
     "email": "natteens.social@gmail.com",
     "url": "https://github.com/Natteens"
   },
+  "dependencies": {
+    "com.unity.inputsystem": "1.3.0"
+  },
   "documentationUrl": "https://github.com/Natteens/commander",
   "changelogUrl": "https://github.com/Natteens/commander/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/Natteens/commander/blob/main/LICENSE.md"
