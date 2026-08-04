@@ -2,31 +2,49 @@
 
 # Commander
 
-A lightweight in-game command console for Unity.
+**Open a console inside the running game and ask it what is happening.**
 
-[![Release](https://img.shields.io/github/v/release/Natteens/commander?style=flat-square)](https://github.com/Natteens/commander/releases)
+A lightweight development console for Unity with discoverable commands, argument parsing,
+autocomplete, history and a small set of runtime diagnostics.
+
+[![Release](https://img.shields.io/github/v/release/Natteens/commander?sort=semver&label=release&style=flat-square)](https://github.com/Natteens/commander/releases)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-000000?style=flat-square&logo=unity)](https://unity.com)
-[![License](https://img.shields.io/github/license/Natteens/commander?style=flat-square)](LICENSE.md)
+[![Input System](https://img.shields.io/badge/Input_System-1.3.0%2B-555555?style=flat-square)](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.3/manual/index.html)
+[![License](https://img.shields.io/github/license/Natteens/commander?style=flat-square)](./LICENSE.md)
+
+[Why Commander?](#why-commander) · [Installation](#installation) · [Quick Start](#quick-start) · [Documentation](#documentation)
 
 </div>
 
-Commander adds a runtime console for development builds without tying commands to a specific game architecture. It includes command discovery, argument parsing, history, autocomplete and simple diagnostic overlays.
+---
 
-## Features
+## Why Commander?
 
-- Attribute-based custom commands.
-- Command history and autocomplete.
-- Built-in FPS and memory diagnostics.
-- Unity Input System support.
+Debug menus are useful until every new action needs another button, panel or temporary shortcut.
+Commander gives development tools a common entry point instead: type a command, inspect the result
+and keep the gameplay UI out of the process.
 
-## Requirements
+Commands can live beside the systems they operate on. The console discovers them, parses their
+arguments and presents them through a searchable runtime interface, while the game remains free to
+own the actual behavior.
 
-- Unity 2021.3 or newer.
-- Unity Input System 1.3.0 or newer.
+<table>
+<tr>
+<td width="50%"><strong>Discoverable commands</strong><br><sub>Expose small development actions through attributes and list them from the console.</sub></td>
+<td width="50%"><strong>Useful input flow</strong><br><sub>Autocomplete, history and scrollable output make repeated testing less tedious.</sub></td>
+</tr>
+<tr>
+<td width="50%"><strong>Typed arguments</strong><br><sub>Command text is converted into supported C# and Unity value types before invocation.</sub></td>
+<td width="50%"><strong>Runtime diagnostics</strong><br><sub>Built-in helpers cover common checks such as FPS, memory and time scale.</sub></td>
+</tr>
+</table>
 
 ## Installation
 
-Add the package through `Window > Package Manager > Add package from git URL`:
+Commander requires Unity **2021.3** or newer. The Unity Input System dependency is declared by the
+package.
+
+In the Package Manager, choose **Add package from git URL** and paste:
 
 ```text
 https://github.com/Natteens/commander.git
@@ -42,11 +60,14 @@ Or add it to `Packages/manifest.json`:
 }
 ```
 
-## Quick start
+For a production project, pin the URL to a release tag instead of following `main`.
 
-1. Add `ConsoleController` to a GameObject.
-2. Enter Play Mode and press `F1`.
-3. Run `help` to list the commands available in the current build.
+## Quick Start
+
+Add `ConsoleController` to an active GameObject, enter Play Mode and press `F1`. The `help` command
+shows the commands available in the installed version.
+
+A method becomes a command with one attribute:
 
 ```csharp
 using Commander;
@@ -62,10 +83,21 @@ public sealed class PlayerCommands : MonoBehaviour
 }
 ```
 
+Keep command methods narrow. Validation and game rules should remain in the systems that already own
+them; Commander is the development doorway, not a second gameplay architecture.
+
 ## Documentation
 
-Setup details, controls and command authoring are available in [Documentation](Documentation~/index.md).
+The main README stays focused on what Commander is and how to try it. The detailed reference lives
+in [Documentation](./Documentation~/index.md), including:
+
+- runtime controls and built-in commands;
+- custom command authoring and supported arguments;
+- the main runtime components;
+- build-safety notes and troubleshooting.
+
+See the [changelog](./CHANGELOG.md) for release history.
 
 ## License
 
-MIT. See [LICENSE.md](LICENSE.md).
+MIT. See [LICENSE.md](./LICENSE.md).
