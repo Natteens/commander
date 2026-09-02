@@ -128,7 +128,7 @@ namespace Commander
         [Command("find_objects", "Encontra objetos por nome")]
         public static void FindObjects(string namePattern)
         {
-            var objects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+            var objects = FindAllGameObjects();
             var matches = objects.Where(obj => obj.name.ToLower().Contains(namePattern.ToLower()))
                                  .Select(obj => obj.name)
                                  .ToList();
@@ -167,7 +167,7 @@ namespace Commander
         [Command("scene_objects", "Lista todos os objetos da cena")]
         public static void ListSceneObjects()
         {
-            var objects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.InstanceID);
+            var objects = FindAllGameObjects();
             
             CommandSystem.Log($"=== Objetos da Cena ({objects.Length}) ===", CommandStatus.Info);
             
@@ -192,7 +192,7 @@ namespace Commander
         public static void ShowSceneInfo()
         {
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            var gameObjects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+            var gameObjects = FindAllGameObjects();
             
             CommandSystem.Log("=== Informações da Cena ===", CommandStatus.Info);
             CommandSystem.Log($"Nome: {scene.name}", CommandStatus.Info);
@@ -290,6 +290,15 @@ namespace Commander
             var path = System.IO.Path.Combine(Application.persistentDataPath, filename);
             ScreenCapture.CaptureScreenshot(path);
             CommandSystem.Log($"Screenshot salva em: {path}", CommandStatus.Success);
+        }
+
+        private static GameObject[] FindAllGameObjects()
+        {
+#if UNITY_6000_5_OR_NEWER
+            return Object.FindObjectsByType<GameObject>();
+#else
+            return Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+#endif
         }
     }
 }

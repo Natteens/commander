@@ -41,7 +41,11 @@ namespace Commander
             _instance = null;
             _initializationAttempted = false;
             
+#if UNITY_6000_5_OR_NEWER
+            var staleObjects = FindObjectsByType<ConsoleInitializer>();
+#else
             var staleObjects = FindObjectsByType<ConsoleInitializer>(FindObjectsSortMode.None);
+#endif
             foreach (var obj in staleObjects)
             {
                 if (obj != null && obj.gameObject != null)
@@ -50,7 +54,11 @@ namespace Commander
                 }
             }
             
+#if UNITY_6000_5_OR_NEWER
+            var staleConsoles = FindObjectsByType<ConsoleUI>();
+#else
             var staleConsoles = FindObjectsByType<ConsoleUI>(FindObjectsSortMode.None);
+#endif
             foreach (var console in staleConsoles)
             {
                 if (console != null && console.gameObject != null)

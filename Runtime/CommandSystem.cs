@@ -13,7 +13,15 @@ namespace Commander
         private static readonly List<ICommandObserver> Observers = new();
         private static readonly ParameterConverter Converter = new();
         private static bool _isInitialized;
-        
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Commands.Clear();
+            Observers.Clear();
+            _isInitialized = false;
+        }
+
         public static void Initialize()
         {
             if (_isInitialized) return;
@@ -261,7 +269,11 @@ namespace Commander
         {
             if (typeof(MonoBehaviour).IsAssignableFrom(type))
             {
+#if UNITY_6000_5_OR_NEWER
+                var instance = UnityEngine.Object.FindAnyObjectByType(type);
+#else
                 var instance = UnityEngine.Object.FindFirstObjectByType(type);
+#endif
                 if (instance != null) return instance;
                 var go = new GameObject($"Commander_{type.Name}");
                 UnityEngine.Object.DontDestroyOnLoad(go);
