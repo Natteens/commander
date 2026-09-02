@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/Natteens/commander/compare/v0.2.1...v0.2.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* reset runtime state across play sessions ([af4e118](https://github.com/Natteens/commander/commit/af4e118437091ee8d77526feca19a83688ec758d))
+
 ## [0.2.1](https://github.com/Natteens/commander/compare/v0.2.0...v0.2.1) (2026-08-04)
 
 
